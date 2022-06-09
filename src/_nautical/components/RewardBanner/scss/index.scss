@@ -1,0 +1,20 @@
+@import "../../../../globalStyles/scss/variables.scss";
+
+.reward-icon {
+  margin-right: 10px;
+}
+
+.reward_banner {
+  display: flex !important;
+  border-bottom: 1px solid #999;
+  height: 32px;
+  line-height: 32px;
+  text-align: center;
+
+  @media (max-width: $small-screen) {
+    display: none !important;
+    font-size: 0.8rem;
+    height: 24px;
+    line-height: 24px;
+  }
+}

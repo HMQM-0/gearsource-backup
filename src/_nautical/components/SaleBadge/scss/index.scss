@@ -1,0 +1,21 @@
+@import "@temp/globalStyles/scss/variables.scss";
+
+.product__salebadge {
+  height: 64px;
+  left: 0px;
+  position: absolute;
+  top: 0px;
+  width: 64px;
+
+  @media (max-width: $medium-screen) {
+    left: 0px;
+    height: 56px;
+    width: 56px;
+
+    @media (max-width: $small-screen) {
+      left: 0px;
+      height: 48px;
+      width: 48px;
+    }
+  }
+}

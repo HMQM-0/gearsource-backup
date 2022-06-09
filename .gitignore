@@ -1,0 +1,22 @@
+.*
+!.dockerignore
+!.storybook
+!.circle
+!.gitignore
+!.babelrc
+!.plop
+!.jest
+!.linguirc
+!.nvmrc
+!.prettierrc
+dist
+node_modules
+src/locales/_build
+
+cypress/videos
+cypress/screenshots
+
+# node version manager
+env
+
+jest-report/**

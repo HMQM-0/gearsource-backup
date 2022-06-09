@@ -1,0 +1,39 @@
+.promo-slider-container {
+  margin-left: auto;
+  margin-right: auto;
+  // padding-left: 10px;
+  overflow: hidden;
+  padding-right: 10px;
+  position: relative;
+  text-align: center;
+  width: 100%;
+}
+
+.promo-slider-dots {
+  height: 25px;
+}
+
+.promo-arrow-container {
+  display: flex;
+  color: "white";
+}
+
+.promo-arrow-left {
+  color: white;
+  position: absolute;
+  top: 48%;
+  left: 25px;
+  align-self: flex-start;
+  font-size: 1.5rem;
+  text-shadow: 2px 2px #000000;
+}
+
+.promo-arrow-right {
+  color: white;
+  position: absolute;
+  top: 48%;
+  right: 25px;
+  align-self: flex-end;
+  font-size: 1.5rem;
+  text-shadow: 2px 2px #000000;
+}

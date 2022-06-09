@@ -1,0 +1,43 @@
+@import "@temp/globalStyles/scss/variables.scss";
+
+
+.cookie-hide {
+    display: none;
+    opacity: 0;
+    transition-timing-function: ease-out;
+    transition: 0.3s;
+    transform: translateY(0);
+  }
+  
+.cookie-link {
+    opacity: 0.8;
+    display: inline;
+    padding: .2em;
+  }
+  
+.cookie-root {
+    color: #fff;
+    background-color: #000;
+    height: 64px;
+    padding: 16px;
+    transition-timing-function: ease-out;
+    transition: 0.3s;
+    z-index: 30;
+    width: 100%;
+    bottom: 0;
+    position: fixed;
+    align-items: center;
+    justify-content: space-around;
+    display: flex;
+    font-weight: 600;
+    flex-direction: row;
+    gap: 24px;
+    text-align: center;
+
+    @media (max-width: $small-screen) {
+        height: 176px;
+        padding: 24px;
+        flex-direction: column;
+    }
+
+}

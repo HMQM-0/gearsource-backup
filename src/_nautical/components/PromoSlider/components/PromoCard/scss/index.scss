@@ -1,0 +1,30 @@
+.promo-container {
+  background-color: #fff;
+  display: block;
+  overflow: hidden;
+  position: relative;
+  text-align: center;
+}
+
+.promo-image {
+  height: auto;
+  margin: 10px;
+  position: relative;
+  width: 100%;
+}
+
+.promo-image-box {
+  display: block;
+  overflow: hidden;
+}
+
+.promo-center {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+img.lazyload:not([src]) {
+  visibility: hidden;
+}

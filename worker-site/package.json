@@ -1,0 +1,12 @@
+{
+  "private": true,
+  "name": "immunity-health-site-worker",
+  "version": "1.0.0",
+  "description": "Immunity health static site deployment",
+  "main": "index.js",
+  "author": "Lee Gardner <leland@nauticalcommerce.com",
+  "license": "MIT",
+  "dependencies": {
+    "@cloudflare/kv-asset-handler": "~0.0.11"
+  }
+}

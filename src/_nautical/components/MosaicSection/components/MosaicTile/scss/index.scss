@@ -1,0 +1,48 @@
+.mosaic-tile-container {
+  display: block;
+  position: relative;
+  text-align: center;
+  color: white;
+}
+
+.mosaic-tile-image {
+  max-width: 100%;
+  // max-height: 100%;
+  display: block;
+}
+
+.mosaic-tile-center {
+  display: inline;
+  position: absolute;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.mosaic-tile-left {
+  display: inline;
+  position: absolute;
+  left: 10%;
+  transform: translate(-0%, -50%);
+}
+
+.mosaic-tile-right {
+  display: inline;
+  position: absolute;
+  right: 10%;
+  transform: translate(-0%, -50%);
+}
+
+.mosaic-tile-top {
+  top: 10%;
+  // vertical-align: top;
+}
+
+.mosaic-tile-middle {
+  top: 50%;
+  // vertical-align: middle;
+}
+
+.mosaic-tile-bottom {
+  bottom: 10%;
+  // vertical-align: bottom;
+}

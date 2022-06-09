@@ -1,0 +1,22 @@
+{
+  "name": "nautical-storefront",
+  "description": "A GraphQL-powered, PWA, single-page storefront application for Nautical",
+  "repository": "https://github.com/Nautical-Commerce/nautical-web-upgrade.git",
+  "website": "https://demo.nauticalcommerce.com/",
+  "logo": "",
+  "keywords": ["nautical", "e-commerce", "storefront"],
+  "env": {
+    "API_URI": {
+      "description": "URI of a running instance of Nautical GraphQL API",
+      "value": "http://localhost:8000/graphql/"
+    }
+  },
+  "buildpacks": [
+    {
+      "url": "https://github.com/heroku/heroku-buildpack-nodejs.git"
+    },
+    {
+      "url": "https://github.com/heroku/heroku-buildpack-static.git"
+    }
+  ]
+}

@@ -1,0 +1,10 @@
+name = "artemis-storefront"
+type = "webpack"
+account_id = "3ed0d49edba4c8c022e31c190f7347a8"
+workers_dev = false
+route = "artemis.nauticalcommerce.app/*"
+zone_id = "a8989d88f999900c97c076d46c349372"
+
+[site]
+bucket = "./dist"
+entry-point = "worker-site"

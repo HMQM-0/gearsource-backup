@@ -1,0 +1,76 @@
+@import "../../../globalStyles/scss/variables.scss";
+
+.carousel {
+  &:focus {
+    outline: none !important;
+  }
+  
+  &__control {
+    padding: $carousel-control-padding;
+    background-color: $primary;
+    box-shadow: $carousel-control-shadow;
+    border-radius: 50%;
+    text-align: center;
+    height: 48px;
+    width: 48px;
+
+    &:hover {
+      background-color: $secondary;
+      cursor: pointer;
+    }
+
+    &--right {
+      margin-right: -1.4rem;
+
+      @media (max-width: $container-width) {
+        margin-right: 0;
+      }
+
+      svg {
+        fill: $white;
+        margin-left: 4px;
+        margin-top: 0.5rem;
+        height: 24px;
+      }
+    }
+
+    &--left {
+      margin-left: -0.7rem;
+
+      @media (max-width: $container-width) {
+        margin-left: 0;
+      }
+
+      svg {
+        fill: $white;
+        margin-right: 4px;
+        margin-top: 0.5rem;
+        height: 24px;
+      }
+    }
+  }
+
+  .carousel:focus {
+    outline: none;
+  }
+
+  .slider-slide {
+    text-align: center;
+  }
+
+  .slider:focus {
+      outline: none;
+  }
+
+  .slider-frame:focus {
+    outline: none;
+  }
+
+  .slider-list:focus {
+    outline: none;
+  }
+  
+  .slider-slide:focus {
+    outline: none;
+  }
+}

@@ -1,0 +1,132 @@
+@import "../../../globalStyles/scss/variables.scss";
+
+.footer {
+  &__favicons {
+    border-top: 1px solid $gray-light;
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  &__menu {
+    background-color: $footer;
+    padding: $spacer * 3 0 $spacer * 2;
+
+    .container {
+      display: flex;
+      flex-wrap: wrap;
+
+      div {
+        &:not(:last-of-type) {
+          padding-right: $spacer * 3;
+        }
+      }
+    }
+
+    &-section {
+      &-header {
+        font-weight: $bold-font-weight;
+        margin-bottom: $spacer;
+      }
+
+      &-content {
+        p {
+          font-weight: $bold-font-weight;
+          margin-bottom: $spacer;
+          font-size: $small-font-size;
+          color: $gray;
+
+          a {
+            text-decoration: none;
+            color: $gray;
+          }
+        }
+      }
+    }
+  }
+
+  &-nav {
+
+    .social-icons {
+      align-items: center;
+      display: flex;
+      gap: 16px;
+      justify-content: center;
+      margin-bottom: $spacer * 2;
+    }
+
+
+    border-top: 1px solid #ccc;
+    // background-color: $blue-dark;
+    background-color: $footer;
+    // padding: $spacer * 3 0 $spacer * 2;
+    padding-top: $spacer * 1.5;
+    padding-bottom: $spacer * 5;
+    padding-left: $spacer * 2;
+    padding-right: $spacer * 2;
+    color: $white;
+    // height: 250px;
+
+    &-wrapper {
+      display: flex;
+      flex-direction: row;
+      flex-wrap: wrap;
+      row-gap: 16px;
+    }
+
+    .container {
+      background-color: $footer;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+
+      div:not(:last-of-type) {
+        padding-right: $spacer * 3;
+      }
+    }
+
+    &__section {
+      @media (max-width: $small-screen) {
+        margin-top: 16px;
+      }
+
+      &-right {
+        text-align: right;
+        width: 50%;
+        @media (max-width: $small-screen) {
+          width: 100%
+        }
+      }
+
+      &-header {
+        margin-bottom: $spacer;
+        & a, span {
+          color: $white;
+          font-weight: $bold-font-weight;
+          font-size: $small-font-size;
+          text-decoration: underline;
+        }
+
+      }
+
+      &-caption {
+        display: flex;
+        font-size: 0.875rem;
+      }
+
+      &-content {
+        p {
+          margin-bottom: $spacer;
+          font-size: $small-font-size;
+          color: $white;
+          // color: $gray;
+
+          a {
+            text-decoration: none;
+            // color: $gray;
+          }
+        }
+      }
+    }
+  }
+}

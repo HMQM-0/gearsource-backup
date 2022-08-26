@@ -18,12 +18,12 @@ import Loader from "@temp/components/Loader";
  */
 const StripePaymentGateway: React.FC<IProps> = ({
   config,
-  processPayment,
   formRef,
   formId,
   total,
   errors = [],
   onError,
+  setPaymentAlreadySubmitted,
 }: IProps) => {
   const [submitErrors, setSubmitErrors] = useState<IFormError[]>([]);
   const [clientSecret, setClientSecret] = useState("");
@@ -72,6 +72,13 @@ const StripePaymentGateway: React.FC<IProps> = ({
       },
     },
     onCompleted: (data) => {
+      if (
+        data?.getClientSecret?.payment_method_already_provided &&
+        setPaymentAlreadySubmitted
+      ) {
+        setPaymentAlreadySubmitted(true);
+        return;
+      }
       if (data?.getClientSecret?.id) {
         const existingId = localStorage.getItem("nauticalPaymentId");
         if (existingId !== data.getClientSecret.id) {

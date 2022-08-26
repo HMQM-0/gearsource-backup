@@ -18,7 +18,6 @@ import RegisterForm from "./RegisterForm";
 
 import closeImg from "../../../images/x.svg";
 import ForgottenPassword from "./ForgottenPassword";
-import { Tab, Tabs } from "@mui/material";
 
 class Login extends React.Component<
   { overlay: OverlayContextInterface; active?: "login" | "register" },
@@ -42,11 +41,6 @@ class Login extends React.Component<
   render() {
     const { overlay } = this.props;
     const { show, hide } = overlay;
-    const [value, setValue] = React.useState(0);
-
-    const handleTabChange = (event, newValue) => {
-      setValue(newValue);
-    };
 
     return (
       <Overlay testingContext="loginOverlay" context={overlay}>
@@ -62,16 +56,6 @@ class Login extends React.Component<
                 className="overlay__header__close-icon"
               />
             </Box>
-            <Tabs value={value} onChange={handleTabChange} textColor="primary">
-              <Tab
-                label={<FormattedMessage defaultMessage="Sign in to account" />}
-              />
-              <Tab
-                label={
-                  <FormattedMessage defaultMessage="Register new account" />
-                }
-              />
-            </Tabs>
             <Box className="login__tabs">
               <Box
                 component="span"

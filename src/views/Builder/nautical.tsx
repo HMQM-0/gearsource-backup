@@ -23,7 +23,7 @@ import {
   Typography,
 } from "@mui/material";
 import { AlertIcon, ButtonIcon, GridIcon, TextfieldIcon } from "./icons";
-import React, { useEffect } from "react";
+import React, { useCallback, useEffect } from "react";
 import {
   InsertMenuConfig,
   InsertMenuItem,
@@ -37,7 +37,6 @@ import {
   StringParam,
   useQueryParam,
   useQueryParams,
-  withDefault,
 } from "use-query-params";
 import ProductGallery from "./components/ProductGallery";
 import { FormattedMessage } from "react-intl";
@@ -180,7 +179,9 @@ export const BuilderAddToWishlist = (props: { productId: string }) => {
     if (Builder.isEditing || Builder.isPreviewing) {
       return <>AddToWishlist is missing Product ID</>;
     } else {
-      console.error('AddToWishlist button is missing productId mapping from Context.');
+      console.error(
+        "AddToWishlist button is missing productId mapping from Context."
+      );
     }
   }
   return <AddToWishlist productId={props.productId} showButtonText={false} />;
@@ -559,7 +560,7 @@ export const BuilderProductSort = (props: { defaultSort }) => {
   // const [before, setBefore] = useQueryParam("before", StringParam);
 
   const [queryParams, setQueryParams] = useQueryParams({
-    sortBy: withDefault(StringParam, props.defaultSort),
+    sortBy: StringParam,
     after: StringParam,
     before: StringParam,
   });
@@ -567,23 +568,22 @@ export const BuilderProductSort = (props: { defaultSort }) => {
   // @ts-ignore
   const { sortBy: sort, after, before } = queryParams;
 
-  const handleSortChange = (value: any) => {
-    // setSort(value.value);
+  const handleSortChange = useCallback((value: any) => {
     setQueryParams({
       sortBy: value.value,
       after: null,
       before: null,
     });
-  };
+  }, [setQueryParams]);
 
-  // useEffect(() => {
-  //   setQueryParams({
-  //     sortBy: props.defaultSort,
-  //     after: null,
-  //     before: null
-  //   })
-  //   handleSortChange(props.defaultSort)
-  // }, [])
+  useEffect(
+    () => {
+      if (typeof sort === 'undefined' && props.defaultSort) {
+        handleSortChange({ value: props.defaultSort });
+      }
+    },
+    [sort, props.defaultSort]
+  );
 
   return (
     <DropdownSelect
@@ -669,7 +669,8 @@ export const BuilderProductFilters = (props: {
     }
   };
 
-  useEffect(() => {
+  useEffect(
+    () => {
       window.scrollTo(0, 0);
     },
     // Anytime attribute filters are changed in URL params - trigger scroll to top

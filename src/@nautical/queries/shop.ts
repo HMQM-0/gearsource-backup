@@ -4,6 +4,7 @@ export const getShop = gql`
   query GetShop {
     shop {
       displayGrossPrices
+      loginForCheckout
       loginForPrice
       loginForProducts
       builderKey

@@ -20,6 +20,7 @@ import { CollectionPage } from "../../views/Collection";
 import { MicrositePage } from "../../views/Microsites";
 import { HomePage } from "../../views/Home";
 import { ProductPage } from "../../views/Product";
+import { ProductVariantPage } from "../../views/Listing";
 import { SearchPage } from "../../views/Search";
 import { WishlistPage } from "../../views/Wishlist";
 
@@ -115,6 +116,10 @@ export const AppRoutes: React.FC<IAppProps> = ({ logo }) => {
         <Route
           path={"/store/vendors/*"}
           element={<StorePage vendors={true} />}
+        />
+        <Route
+          path={paths.listingUrl}
+          element={<ProductVariantPage />}
         />
         <Route path={"/article/*"} element={<ArticlePage />} />
         <Route path={paths.aboutUrl} element={<About />} />

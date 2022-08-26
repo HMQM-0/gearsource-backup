@@ -24,6 +24,9 @@ import { useIntl } from "react-intl";
 import { userWishlist } from "@temp/@nautical/queries/wishlist";
 import { WishlistContext } from "@nautical/react/components/WishlistProvider/context";
 import { FilterQuerySet } from "../Products/View";
+import { NotFound } from "@temp/components";
+import escapeHtml from 'escape-html'
+import { Text } from 'slate'
 // import { useProductVariantsAttributes, useProductVariantsAttributesValuesSelection } from "@hooks";
 
 const model = "store";
@@ -33,6 +36,7 @@ interface IStorePage {
   collection?: any;
   product?: any;
   landing?: any;
+  listing?: any;
   products?: any;
   loadMore?: any;
   loadNextPage?: any;
@@ -45,7 +49,7 @@ interface IStorePage {
 }
 
 const NoComponent: React.FunctionComponent = (props) => {
-  return <>404</>;
+  return <NotFound />;
 };
 
 const StorePage: React.FunctionComponent<IStorePage> = (props) => {
@@ -54,6 +58,7 @@ const StorePage: React.FunctionComponent<IStorePage> = (props) => {
     collection,
     product,
     landing,
+    listing,
     products,
     loadMore,
     loadNextPage,
@@ -147,6 +152,9 @@ const StorePage: React.FunctionComponent<IStorePage> = (props) => {
       case "microsite":
         schema = "site";
         break;
+      case "productvariant":
+        schema = "listing";
+        break;
       // case "product":
       //   schema = "produit"
     }
@@ -178,6 +186,34 @@ const StorePage: React.FunctionComponent<IStorePage> = (props) => {
   const [selectedVariant, setSelectedVariant] = React.useState(
     product?.defaultVariant
   );
+
+  const serialize = node => {
+    if (Text.isText(node)) {
+      let string = escapeHtml(node.text)
+      // @ts-ignore
+      if (node.bold) {
+        string = `<strong>${string}</strong>`
+      }
+      return string
+    }
+  
+    const children = node.children.map(n => serialize(n)).join('')
+  
+    switch (node.type) {
+      case 'quote':
+        return `<blockquote><p>${children}</p></blockquote>`
+      case 'paragraph':
+        return `<p>${children}</p>`
+      case 'link':
+        return `<a href="${escapeHtml(node.url)}">${children}</a>`
+      case 'bulleted-list':
+        return `<ul>${children}</ul>`
+      case 'list-item':
+        return `<li style="list-style: circle">${children}</li>`
+      default:
+        return children
+    }
+  }
 
   // function getSelectedVariant() {
   //   // attributeSelections
@@ -338,6 +374,7 @@ const StorePage: React.FunctionComponent<IStorePage> = (props) => {
       defaultVariant: sanitizeModel(product?.defaultVariant),
       // "selectedVariant": sanitizeModel(selectedVariant),
       shop: sanitizeModel(landing),
+      listing: sanitizeModel(listing),
       products: sanitizeModel(products),
       search: sanitizeModel(search),
       wishlist: sanitizeModel(wishlist),
@@ -355,6 +392,7 @@ const StorePage: React.FunctionComponent<IStorePage> = (props) => {
           ...micrositesVariables,
           search: query,
         }),
+      serializeSlate: (node) => serialize(node),
       navigate: (to: string, replace: boolean) => navigate(to, { replace }),
       navigateById: (id: string, name: string) => handleNavigateById(id, name),
       navigateByItem: (item) => handleNavigateByItem(item),
@@ -372,11 +410,11 @@ const StorePage: React.FunctionComponent<IStorePage> = (props) => {
     }),
     [props, builderMicrositesData]
   );
-
   // console.info("SANITIZED STATE DATA")
   // console.info(stateData)
 
   function getStoreModel() {
+    if (listing) return "/store/listing";
     if (search) return "/store/search";
     if (category) return "/store/category";
     if (collection) return "/store/collection";
@@ -390,7 +428,6 @@ const StorePage: React.FunctionComponent<IStorePage> = (props) => {
 
   React.useEffect(() => {
     type = maybe(() => getStoreModel(), "/store/landing");
-    console.info(type);
     if (!isEditingOrPreviewing) {
       const fetchPage = async () => {
         setLoading(true);

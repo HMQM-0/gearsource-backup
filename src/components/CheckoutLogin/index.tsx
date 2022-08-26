@@ -11,6 +11,7 @@ import { Offline, OfflinePlaceholder, Online, OverlayContext } from "..";
 import CheckoutAsGuest from "./CheckoutAsGuest";
 import SignInForm from "./SignInForm";
 import { OverlayType, OverlayTheme } from "../Overlay";
+import { ShopContext } from "@temp/components/ShopProvider/context";
 // import { generateMicrositeUrl } from "@utils/core";
 // import {
 //   getMicrositeId,
@@ -20,6 +21,7 @@ import { OverlayType, OverlayTheme } from "../Overlay";
 
 const CheckoutLogin: React.FC<{}> = () => {
   const overlay = useContext(OverlayContext);
+  const { loginForCheckout } = React.useContext(ShopContext);
   const { user } = useAuth();
   const { show } = overlay;
 
@@ -46,18 +48,9 @@ const CheckoutLogin: React.FC<{}> = () => {
     <Box className="container">
       <Online>
         <Box className="checkout-login">
-          <CheckoutAsGuest
-            overlay={overlay}
-            checkoutUrl={
-              // !!isMicrosite()
-              //   ? `${generateMicrositeUrl(
-              //       getMicrositeId(),
-              //       getMicrositeSlug()
-              //     )}checkout/`
-              //   : "/checkout/"
-              "/checkout/"
-            }
-          />
+          {!loginForCheckout && (
+            <CheckoutAsGuest overlay={overlay} checkoutUrl="/checkout/" />
+          )}
           <Box className="checkout-login__user">
             <SignInForm onForgottenPasswordClick={showPasswordResetOverlay} />
           </Box>

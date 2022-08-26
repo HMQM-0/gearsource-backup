@@ -66,6 +66,17 @@ module.exports = ({ sourceDir, distDir }) => ({
         ],
       },
       {
+        test: /\.txt/,
+        use: [
+          {
+            loader: "file-loader",
+            options: {
+              name: "[name].[ext]",
+            },
+          },
+        ],
+      },
+      {
         test: /\.(gif|jpg|png|svg)$/,
         use: [
           {

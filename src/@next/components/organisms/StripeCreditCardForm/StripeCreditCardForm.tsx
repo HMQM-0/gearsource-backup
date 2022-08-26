@@ -25,14 +25,16 @@ const StripeCreditCardForm: React.FC<IProps> = ({
   return (
     <S.Form id={formId} ref={formRef}>
       <PaymentElement />
-      {errors && errors.length > 0 && 
+      {errors && errors.length > 0 && (
         <>
           <Spacer />
           <Alert severity="error">
-            {errors.map(error => <Box>{error.message}</Box>)}
+            {errors.map((error) => (
+              <Box>{error.message}</Box>
+            ))}
           </Alert>
         </>
-      }
+      )}
       <button
         id="gatewayButton"
         onClick={async (event) => {

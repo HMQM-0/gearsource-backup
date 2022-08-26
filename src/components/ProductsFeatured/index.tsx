@@ -44,10 +44,7 @@ const ProductsFeatured: React.FC<ProductsFeaturedProps> = ({
                 {caption ? <Box className="caption">{caption}</Box> : null}
                 <Carousel>
                   {products.map(({ node: product }) => (
-                    <Link
-                      to={generateProductUrl(product)}
-                      key={product.id}
-                    >
+                    <Link to={generateProductUrl(product)} key={product.id}>
                       <ProductListItem
                         product={product}
                         loginForPrice={!user && data?.shop?.loginForPrice}

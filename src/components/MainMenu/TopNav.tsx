@@ -23,18 +23,30 @@ import { useNavigate } from "react-router-dom";
 import { DesignerData, MenuStyle } from "./gqlTypes/MenuStyle";
 import { maybe } from "@utils/misc";
 import { mainMenu } from "./queries";
-
 // Material Icons
 import "./scss/index.scss";
+import DeliverAddress from "./DeliverAddress";
+import FlagMenu from "./LenguajeSelection";
 import DrawerCart from "./DrawerCart";
 import DrawerLogin from "./DrawerLogin";
 import DrawerMenu from "./DrawerMenu";
 import MenuOpenIcon from "@mui/icons-material/MenuOpen";
 import PersonOutlineOutlinedIcon from "@mui/icons-material/PersonOutlineOutlined";
-import PersonIcon from "@mui/icons-material/Person";
+//import PersonIcon from "@mui/icons-material/Person";
 import SearchIcon from "@mui/icons-material/Search";
-import RocketLaunchIcon from "@mui/icons-material/RocketLaunch";
-import ShoppingBagOutlinedIcon from "@mui/icons-material/ShoppingBagOutlined";
+import StarBorderIcon from '@mui/icons-material/StarBorder';
+import List from '@mui/material/List';
+import ListItem from '@mui/material/ListItem';
+import ListItemButton from '@mui/material/ListItemButton';
+import ListItemText from '@mui/material/ListItemText';
+import GridViewIcon from '@mui/icons-material/GridView';
+import ShoppingCartCheckoutIcon from '@mui/icons-material/ShoppingCartCheckout';
+import LoginIcon from '@mui/icons-material/Login';
+import AccountBoxIcon from '@mui/icons-material/AccountBox';
+
+//import RocketLaunchIcon from "@mui/icons-material/RocketLaunch";
+//import ShoppingBagOutlinedIcon from "@mui/icons-material/ShoppingBagOutlined";
+
 import { Logout, ImportContacts } from "@mui/icons-material";
 import HistoryIcon from "@mui/icons-material/History";
 import FavoriteIcon from "@mui/icons-material/Favorite";
@@ -48,12 +60,14 @@ const useStyles = makeStyles((theme: Theme) =>
       },
     },
     search: {
-      padding: "2px 4px",
+      padding: "0px 4px",
       display: "flex",
       alignItems: "center",
-      width: 400,
+      minWidth: 410,
+      height:37,
+      color:"#858585",
       border: `1px solid ${theme.palette.divider}`,
-      borderRadius: 25,
+      borderRadius: 3,
     },
   })
 );
@@ -160,18 +174,18 @@ const TopNav: React.FunctionComponent<ITopNavProps> = (props) => {
   const menuItems = maybe(() => data.shop.navigation.main.items, []);
   return (
     <>
-      <AppBar
+      <AppBar 
         position="relative"
-        sx={{ backgroundColor: "#fff", minHeight: 72 }}
+        sx={{ backgroundColor: "#fff", minHeight: 90, justifyContent: "space-around" }}
       >
-        <Toolbar
+        <Toolbar 
           sx={{
             display: "flex",
             alignContent: "center",
             alignSelf: "center",
-            justifyContent: "space-between",
-            minHeight: "72px !important",
-            maxWidth: 1200,
+            justifyContent: "space-around",
+            minHeight: "90px !important",
+            maxWidth: 1280,
             width: "100%",
           }}
         >
@@ -190,7 +204,7 @@ const TopNav: React.FunctionComponent<ITopNavProps> = (props) => {
           </Button>
 
           <Box sx={{ alignContent: "center", display: "flex", flexBasis: 200 }}>
-            <Box sx={{ alignItems: "center", display: "flex" }}>
+            <Box sx={{ alignItems: "center", display: "flex", height:'60px', width:133 }}>
               {logoImage}
             </Box>
             <Button
@@ -208,35 +222,105 @@ const TopNav: React.FunctionComponent<ITopNavProps> = (props) => {
             </Button>
           </Box>
 
+           <Box>
+                <DeliverAddress/>
+            </Box>  
+                 
           <Box sx={{ display: { xs: "none", sm: "block" } }}>
             <Paper elevation={0} className={classes.search}>
-              <IconButton sx={{ p: "10px" }} aria-label="Search">
+              {/* <IconButton sx={{ p: "10px" }} aria-label="Search">
                 <SearchIcon htmlColor="#777" />
-              </IconButton>
+              </IconButton> */}
               <InputBase
                 onChange={handleChange}
                 onKeyPress={handleKeyPress}
-                sx={{ ml: 1, flex: 1 }}
-                placeholder="Search Products"
+                sx={{ ml: 1, flex: 1}}
+                placeholder="Purchase new or used musical equipment..."
                 inputProps={{ "aria-label": "search" }}
               />
-              <Divider sx={{ height: 28, m: 0.5 }} orientation="vertical" />
+              <Divider sx={{ height: 37, m: 0.5 }} orientation="vertical" />
               <IconButton
                 color="primary"
                 sx={{ p: "10px" }}
                 onClick={() => handleSearch()}
                 aria-label="Search"
               >
-                <RocketLaunchIcon />
+                 <SearchIcon htmlColor="#858585" />
+                {/*<RocketLaunchIcon htmlColor="#000033" />*/}
               </IconButton>
-            </Paper>
+            </Paper>         
           </Box>
 
+          <Box sx={{ml:2,mr:2}}>
+              <Button variant="outlined" 
+                      sx={{borderRadius:"3px",
+                      borderColor:"#2483BF",
+                          fontSize:"15px",
+                          color:"#2483BF",
+                          padding:"0",
+                          minWidth:147,
+                          maxHeight:37,
+                          textTransform: 'lowercase'
+            
+            }}>Sell your gear</Button>
+          </Box>
+          <Box>
+            <List sx={{display:"flex", flexDirection:"row"}}>
+          <ListItem  disablePadding >
+            <ListItemButton onClick={() => navigate("wishlist/")} sx={{display:"flex", flexDirection:"column", color:"#000", padding:0,'&:hover': {
+                    opacity:0.8,
+                    background:'transparent'
+                    }}}>
+              <ListItemIcon sx={{justifyContent:"center"}}>
+               <StarBorderIcon   htmlColor="#2483BF"/>
+              </ListItemIcon>
+              <ListItemText secondaryTypographyProps={{ sx: { fontSize:10 } }}secondary="Follow it" />
+            </ListItemButton>
+          </ListItem>
+          <ListItem disablePadding>
+            <ListItemButton sx={{display:"flex", flexDirection:"column", color:"#000", padding:0,'&:hover': {
+                    opacity:0.8,
+                    background:'transparent'
+                    }}}>
+              <ListItemIcon sx={{justifyContent:"center"}}>
+                <GridViewIcon htmlColor="#2483BF" />
+              </ListItemIcon>
+              <ListItemText secondaryTypographyProps={{ sx: { fontSize:10 } }}secondary="My Content" />
+            </ListItemButton>
+          </ListItem>
+           <ListItem disablePadding sx={{bgcolor:"transparent",'&:hover': { background: "transparent",},}}>
+            <ListItemButton sx={{display:"flex", flexDirection:"column", color:"#000", padding:0, '&:hover': {
+                    opacity:0.8,
+                    background:'transparent'
+                    }}}>
+              <ListItemIcon sx={{justifyContent:"center"}}>
+                <Badge badgeContent={cartItemsQuantity} color="primary">
+                    <IconButton 
+                      sx={{ backgroundColor: "transparent", padding:0 }}
+                      onClick={() => handleCart()}
+                      aria-label="Cart"
+                    >
+                <ShoppingCartCheckoutIcon htmlColor="#2483BF" />
+              </IconButton>
+            </Badge>
+              </ListItemIcon>
+              <ListItemText secondaryTypographyProps={{ sx: { fontSize:10 } }}secondary="Cart" />
+            </ListItemButton>
+          </ListItem>
+        </List>
+          
+          </Box>
+         
+          <FlagMenu></FlagMenu>
+         
           <Box
             sx={{ display: "flex", flexBasis: 200, justifyContent: "flex-end" }}
           >
             <IconButton
               color="inherit"
+              sx={{'&:hover': {
+                    background: "transparent",
+                    }}}
               aria-label="account"
               // size="small"
               // sx={{ ml: 2 }}
@@ -255,10 +339,23 @@ const TopNav: React.FunctionComponent<ITopNavProps> = (props) => {
                 }
               }}
             >
+             
               {user ? (
-                <PersonIcon color="primary" />
+                <List >
+                  <ListItem sx={{display:"flex",flexDirection:"column", padding:0}}>
+                      <AccountBoxIcon htmlColor="#858585" />
+                      <ListItemText secondaryTypographyProps={{ sx: { fontSize:10 } }}secondary="Account" />
+                  </ListItem>
+                </List>
+                
               ) : (
-                <PersonOutlineOutlinedIcon color="action" />
+                <List>
+                  <ListItem sx={{display:"flex",flexDirection:"column", padding:0}}>
+                      <LoginIcon htmlColor="#858585" />
+                      <ListItemText secondaryTypographyProps={{ sx: { fontSize:10 } }}secondary="Log In" />
+                  </ListItem>
+                </List>
+                
               )}
               <Menu
                 anchorEl={anchorEl}
@@ -329,15 +426,7 @@ const TopNav: React.FunctionComponent<ITopNavProps> = (props) => {
               </Menu>
             </IconButton>
             {/* </Hidden> */}
-            <Badge badgeContent={cartItemsQuantity} color="secondary">
-              <IconButton
-                sx={{ backgroundColor: "#F3F5F9" }}
-                onClick={() => handleCart()}
-                aria-label="Cart"
-              >
-                <ShoppingBagOutlinedIcon htmlColor="#777" />
-              </IconButton>
-            </Badge>
+            
           </Box>
         </Toolbar>
       </AppBar>
@@ -350,7 +439,12 @@ const TopNav: React.FunctionComponent<ITopNavProps> = (props) => {
       />
       <DrawerCart anchor="right" open={cartOpen} close={handleCartClose} />
       <DrawerLogin anchor="right" open={loginOpen} close={handleLoginClose} />
+     <Box sx={{width:"100%", maxHeight:"25px",background:"#2483BF", display:"list-item"}}>
+            
+     </Box>
     </>
+  
+  
   );
 };
 

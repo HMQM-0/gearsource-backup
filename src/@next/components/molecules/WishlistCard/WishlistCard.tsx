@@ -207,11 +207,7 @@ const WishlistCard: FC<Props> = ({ item }) => {
       <Box className={classes.details}>
         <h3
           className={classes.productName}
-          onClick={() =>
-            navigate(
-              generateProductUrl(item.product)
-            )
-          }
+          onClick={() => navigate(generateProductUrl(item.product))}
         >
           {product.name}
         </h3>

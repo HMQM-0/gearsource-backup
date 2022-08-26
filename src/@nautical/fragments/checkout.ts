@@ -164,6 +164,7 @@ export const checkoutFragment = gql`
       value {
         id
         name
+        requiresSecondaryAddress
         price {
           currency
           amount

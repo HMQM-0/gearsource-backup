@@ -9,6 +9,7 @@ export const collectionUrl = `${baseUrl}collection/${slugUrl}`;
 export const micrositeUrl = `${baseUrl}site/${slugUrl}`;
 // export const micrositeSearchUrl = `${micrositeUrl}search/`;
 export const productUrl = `${baseUrl}product/${slugUrl}`;
+export const listingUrl = `${baseUrl}listing/${slugUrl}`;
 // export const micrositeProductUrl = `${micrositeUrl}product/${slugUrl}`;
 export const productsUrl = `${baseUrl}products/`;
 // export const cartUrl = `${baseUrl}cart/:token?/`;

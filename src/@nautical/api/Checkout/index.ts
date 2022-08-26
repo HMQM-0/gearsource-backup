@@ -152,7 +152,7 @@ export class NauticalCheckoutAPI extends ErrorListener {
     }
 
     const createCheckout = async () => {
-      const {data, dataError} = await this.jobsManager.run(
+      const { data, dataError } = await this.jobsManager.run(
         "checkout",
         "createCheckout",
         {
@@ -174,7 +174,6 @@ export class NauticalCheckoutAPI extends ErrorListener {
       return createCheckout();
     }
 
-
     const { data, dataError } = await this.jobsManager.run(
       "checkout",
       "setShippingAddress",
@@ -187,7 +186,8 @@ export class NauticalCheckoutAPI extends ErrorListener {
     );
 
     const checkoutIdInvalid = dataError?.error?.some(
-      (errorItem) => errorItem?.code === 'NOT_FOUND' && errorItem?.field === 'checkoutId'
+      (errorItem) =>
+        errorItem?.code === "NOT_FOUND" && errorItem?.field === "checkoutId"
     );
 
     if (checkoutIdInvalid) {

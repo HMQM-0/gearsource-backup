@@ -6,7 +6,7 @@ import { useAuth, useShopDetails } from "@nautical/react";
 // import { DemoBanner, Loader } from "@components/atoms";
 // import { demoMode } from "@temp/constants";
 import {
-  Footer,
+ // Footer,
   // MainMenu,
   MetaConsumer,
   OverlayManager,
@@ -132,14 +132,19 @@ const App: React.FC = () => {
   ) : (
     <Skeleton />
   );
-  const icon = data?.branding?.icon ? (
+
+
+  /* const icon = data?.branding?.icon ? (
     <img src={data.branding.icon.url} height="64" width="64" alt="Icon" />
   ) : null;
-  const footerText = data?.branding?.footerText;
+  const footerText = data?.branding?.footerText;*/
+
+
   const brandingActive = maybe(
     () => JSON.parse(data.branding.jsonContent).active,
     false
-  );
+  ); 
+
   // load_favicon(data?.branding?.favicon?.url);
 
   const primaryColor = maybe(() =>
@@ -195,7 +200,7 @@ const App: React.FC = () => {
   // const fillerStyle: React.CSSProperties = trigger
   //   ? { marginBottom: "104px" }
   //   : {};
-  const fillerStyle: React.CSSProperties = { marginBottom: "98px" };
+  const fillerStyle: React.CSSProperties = { marginBottom: "133px" };
 
   return (
     <ShopProvider>
@@ -206,13 +211,13 @@ const App: React.FC = () => {
           <ThemeFont fontName="Playfair Display" />
           {/* <header style={trigger ? stickyStyle : emptyStyle}> */}
           <header style={stickyStyle}>
-            <PromoBanner content="FREE SHIPPING over $50" />
+            <PromoBanner content="FREE SHIPPING over $50"  />
             <TopNav logo={logo} />
           </header>
           <div style={fillerStyle} />
           <AppRoutes logo={logo} />
           <BottomNav />
-          <Footer footerText={footerText} icon={icon} />
+        {/* <Footer footerText={footerText} icon={icon} />*/}
           <CookieBar
             title=""
             description="This website uses cookies to ensure you get the best experience. By continuing to use this site, you consent to cookies being used."

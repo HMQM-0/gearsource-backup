@@ -16,6 +16,7 @@ export const defaultContext: GetShop_shop = {
   gaMeasurementId: null,
   defaultCountry,
   displayGrossPrices: true,
+  loginForCheckout: false,
   loginForPrice: false,
   loginForProducts: false,
   geolocalization: { __typename: "Geolocalization", country: defaultCountry },

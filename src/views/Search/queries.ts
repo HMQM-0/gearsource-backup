@@ -22,7 +22,12 @@ export const searchProductsQuery = gql`
     $after: String
   ) {
     products(
-      filter: { search: $query, attributes: $attributes, isPublished: true, stockAvailability: IN_STOCK }
+      filter: {
+        search: $query
+        attributes: $attributes
+        isPublished: true
+        stockAvailability: IN_STOCK
+      }
       first: $pageSize
       sortBy: $sortBy
       after: $after

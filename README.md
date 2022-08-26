@@ -24,7 +24,7 @@ These instructions will get you a copy of the project up and running on your loc
 
 ### Prerequisites
 
-- Node.js 17.0+
+- Node.js 10.0+
 - A running instance of Nautical.
 
 
@@ -43,13 +43,13 @@ To configure social links in footer, you have to set next environment variables:
 Clone the repository:
 
 ```
-git clone https://github.com/Nautical-Commerce/nautical-storefronts.git
+git clone https://github.com/Nautical-Commerce/nautical-clients.git
 ```
 
 Enter the project directory:
 
 ```
-cd nautical-storefronts
+cd nautical-storefront
 ```
 
 #### Using stable release
@@ -57,17 +57,17 @@ cd nautical-storefronts
 To use the official stable release, checkout to a release tag:
 
 ```
-$ git checkout XXX
+$ git checkout 2.10.4
 ```
 
-See the list of all releases here: https://github.com/Nautical-Commerce/nautical-storefronts/releases/
+See the list of all releases here: https://github.com/Nautical-Commerce/nautical-clients/releases/
 
 #### Using development version
 
-If you want to use the latest development version, checkout to the `main` branch:
+If you want to use the latest development version, checkout to the `master` branch:
 
 ```
-$ git checkout main
+$ git checkout master
 ```
 
 Install NPM dependencies:

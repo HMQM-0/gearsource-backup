@@ -52,7 +52,7 @@ export const DEFAULT_PROPS = {
   variant: {
     id: "UHJvZHVjdFZhcmlhbnQ6Mw==",
     name: "The Great Square Table",
-    slug: "the-great-square-table"
+    slug: "the-great-square-table",
   },
   name: "The Great Square Table",
   quantity: 3,

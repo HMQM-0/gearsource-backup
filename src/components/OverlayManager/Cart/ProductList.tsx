@@ -25,9 +25,7 @@ const ProductList: React.SFC<{
 }> = ({ lines, remove }) => (
   <ul className="cart__list">
     {lines.map((line, index) => {
-      const productUrl = generateProductUrl(
-        line.variant.product
-      );
+      const productUrl = generateProductUrl(line.variant.product);
       const key = line.id ? `id-${line.id}` : `idx-${index}`;
 
       return (

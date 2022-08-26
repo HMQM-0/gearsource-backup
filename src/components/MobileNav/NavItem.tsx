@@ -46,7 +46,7 @@ const NavItem: React.FC<NavItemProps> = ({
       />
       {hasSubNavigation && (
         <IconButton color={"primary"} onClick={() => showSubItems(item)}>
-          <ArrowRightIcon fontSize="large" />
+          <ArrowRightIcon fontSize="medium" />
         </IconButton>
       )}
     </li>

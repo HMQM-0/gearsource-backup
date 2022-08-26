@@ -4,7 +4,11 @@ import {
 } from "../../api/Checkout/types";
 import { cloneDeep } from "lodash";
 import { ApolloClientManager } from "../../data/ApolloClientManager";
-import {ICheckoutModel, ICheckoutModelLine, LocalStorageHandler} from "../../helpers/LocalStorageHandler";
+import {
+  ICheckoutModel,
+  ICheckoutModelLine,
+  LocalStorageHandler,
+} from "../../helpers/LocalStorageHandler";
 import { JobRunResponse } from "../types";
 import {
   CompleteCheckoutJobInput,
@@ -46,9 +50,13 @@ class CheckoutJobs extends JobsHandler<{}> {
    * @param serverCheckout The checkout data provided by the server
    * @param localCheckout The checkout data stored from the local storage
    */
-  mergeCheckouts(
-    {serverCheckout, localStorageCheckout}:
-      { serverCheckout: ICheckoutModel | null; localStorageCheckout: ICheckoutModel | null }): ICheckoutModel | null {
+  mergeCheckouts({
+    serverCheckout,
+    localStorageCheckout,
+  }: {
+    serverCheckout: ICheckoutModel | null;
+    localStorageCheckout: ICheckoutModel | null;
+  }): ICheckoutModel | null {
     const linesCount = localStorageCheckout?.lines?.length;
 
     // If there are no lines in the local storage checkout, nothing to merge yet
@@ -77,11 +85,15 @@ class CheckoutJobs extends JobsHandler<{}> {
 
     // If server checkout line exists that matches local checkout line, set server checkout line quantity to local checkout line quantity
     checkout.lines.forEach((serverLine) => {
-      const localStorageLine = localStorageCheckout.lines.find((l) => l.variant.id === serverLine.variant.id);
+      const localStorageLine = localStorageCheckout.lines.find(
+        (l) => l.variant.id === serverLine.variant.id
+      );
 
       if (localStorageLine) {
         serverLine.quantity = localStorageLine.quantity;
-        itemsToProcess = itemsToProcess.filter(item => item.variant.id === localStorageLine.variant.id)
+        itemsToProcess = itemsToProcess.filter(
+          (item) => item.variant.id === localStorageLine.variant.id
+        );
       } else {
         // If server checkout line exists that does not match any local checkout line, set server checkout line quantity to 0
         serverLine.quantity = 0;
@@ -122,7 +134,9 @@ class CheckoutJobs extends JobsHandler<{}> {
         // TODO Consider to remove getCheckout and use data and error directly from setCartItem()
         //  for now only refresh
         await this.apolloClientManager.setCartItem(mergedCheckout);
-        await this.apolloClientManager.getRefreshedCheckoutLines(mergedCheckout.lines);
+        await this.apolloClientManager.getRefreshedCheckoutLines(
+          mergedCheckout.lines
+        );
 
         ({ data, error } = await this.apolloClientManager.getCheckout(
           isUserSignedIn,
@@ -135,7 +149,7 @@ class CheckoutJobs extends JobsHandler<{}> {
 
     return {
       data,
-    }
+    };
   };
 
   createCheckout = async ({

@@ -8,6 +8,7 @@ import {
   ProductDetails,
   ProductDetailsVariables,
 } from "./gqlTypes/ProductDetails";
+import { VariantDetails, VariantDetailsVariables } from "./gqlTypes/Variant";
 import { VariantList, VariantListVariables } from "./gqlTypes/VariantList";
 
 export const priceFragment = gql`
@@ -120,6 +121,66 @@ export const productVariantFragment = gql`
   }
 `;
 
+export const productVariantDetailFragment = gql`
+  ${priceFragment}
+  fragment ProductVariantDetail on ProductVariant {
+    id
+    sku
+    name
+    product {
+      id
+      name
+      description
+      category {
+        id
+        name
+        trailingBreadcrumbs {
+          id
+          name
+        }
+      }
+    }
+    features {
+      id
+      name
+      description
+    }
+    quantityAvailable(countryCode: $countryCode)
+    images {
+      id
+      url
+      alt
+    }
+    pricing {
+      onSale
+      priceUndiscounted {
+        ...Price
+      }
+      price {
+        ...Price
+      }
+    }
+    attributes {
+      attribute {
+        id
+        name
+        slug
+        metadata {
+          key
+          value
+        }
+      }
+      values {
+        id
+        name
+        value: name
+        extra: value
+      }
+      
+    }
+  }
+`;
+
 export const productDetailsQuery = gql`
   ${basicProductFragment}
   ${selectedAttributeFragment}
@@ -139,10 +200,10 @@ export const productDetailsQuery = gql`
           url
           alt
         }
-        products(first: 6, filter: {
-          isPublished: true
-          stockAvailability: IN_STOCK
-        }) {
+        products(
+          first: 6
+          filter: { isPublished: true, stockAvailability: IN_STOCK }
+        ) {
           edges {
             node {
               ...BasicProductFields
@@ -222,10 +283,10 @@ export const builderProductDetailsQuery = gql`
           url
           alt
         }
-        productList: products(first: 6, filter: {
-          isPublished: true
-          stockAvailability: IN_STOCK
-        }) {
+        productList: products(
+          first: 6
+          filter: { isPublished: true, stockAvailability: IN_STOCK }
+        ) {
           products: edges {
             product: node {
               ...BasicProductFields
@@ -327,6 +388,20 @@ export const productVariantsQuery = gql`
     }
   }
 `;
+
+export const productVariantQuery = gql`
+  ${productVariantDetailFragment}
+  query Variant($id: ID!, $countryCode: CountryCode) {
+    productVariant(id: $id) {
+      ...ProductVariantDetail
+    }
+  }
+`;
+
+export const TypedProductVariantDetailsQuery = TypedQuery<
+  VariantDetails,
+  VariantDetailsVariables
+>(productVariantQuery);
 
 export const TypedProductDetailsQuery = TypedQuery<
   ProductDetails,

@@ -61,8 +61,8 @@ export const generateProductUrl = (product) => {
   const rawId = Base64.decode(product?.id).split(":");
   const primaryKey = rawId[1];
   const slug = product.slug;
-  return "/product/" + slug + "/" + primaryKey + "/"
-}
+  return "/product/" + slug + "/" + primaryKey + "/";
+};
 
 export const generateCategoryUrl = (id: string, name: string) =>
   `/category/${slugify(name)}/${getDBIdFromGraphqlId(id, "Category")}/`;

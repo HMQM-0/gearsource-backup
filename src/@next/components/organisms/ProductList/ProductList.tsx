@@ -51,12 +51,7 @@ export const ProductList: React.FC<IProps> = ({
           return (
             id &&
             name && (
-              <Link
-                to={
-                  generateProductUrl(product)
-                }
-                key={id}
-              >
+              <Link to={generateProductUrl(product)} key={id}>
                 <ProductListItem
                   wide
                   product={product}

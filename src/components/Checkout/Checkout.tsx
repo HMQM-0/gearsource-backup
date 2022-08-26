@@ -27,7 +27,10 @@ import { makeStyles } from "@mui/styles";
 import KeyboardBackspaceIcon from "@mui/icons-material/KeyboardBackspace";
 import LockIcon from "@mui/icons-material/Lock";
 import { IItems } from "@temp/@nautical/api/Cart/types";
-import {ICheckoutModelPriceValue, LocalStorageItems} from "@temp/@nautical/helpers";
+import {
+  ICheckoutModelPriceValue,
+  LocalStorageItems,
+} from "@temp/@nautical/helpers";
 import { ICardData, IFormError, ITaxedMoney } from "@types";
 import * as React from "react";
 import CartSummary from "./CartSummary";
@@ -59,6 +62,7 @@ import { useIntl } from "react-intl";
 import InnerHTML from "dangerously-set-html-content";
 import { useGetShippyProApiKeyForScript } from "../../@nautical/react/queries";
 import { usePersistedState } from "@temp/_nautical/hooks/usePersistedState";
+import { CompleteCheckoutInput } from "@nautical/api/Checkout/types";
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -93,7 +97,7 @@ const useStyles = makeStyles((theme: Theme) => ({
     },
     [theme.breakpoints.down("sm")]: {
       borderTop: `1px solid ${theme.palette.divider}`,
-    }
+    },
   },
   breadcrumb: {
     "& .MuiBreadcrumbs-ol": {
@@ -371,6 +375,11 @@ const MuiCheckout: React.FunctionComponent<ICheckoutProps> = (props) => {
   } = props;
 
   const intl = useIntl();
+  const { displayGrossPrices } = React.useContext(ShopContext);
+  const totalValue = displayGrossPrices
+    ? total?.gross.amount
+    : total?.net.amount;
+  const isPaymentStepRequired = totalValue !== 0;
 
   // STATE
   // const [method, setMethod] = React.useState('creditcard');
@@ -397,10 +406,15 @@ const MuiCheckout: React.FunctionComponent<ICheckoutProps> = (props) => {
     secondaryLocationSelectedForSellers,
     setSecondaryLocationSelectedForSellers,
   ] = React.useState({});
-  // Setting false as a string becasue usePersistedState leverages localStorage,
+  // Setting false as a string because usePersistedState leverages localStorage,
   // which stores and returns all values for set key-value pairs as strings
-  const [shippyProLoaded, setShippyProLoaded] = usePersistedState("shippyProLoaded", "unknown");
+  const [shippyProLoaded, setShippyProLoaded] = usePersistedState(
+    "shippyProLoaded",
+    "unknown"
+  );
   const [shippyProApiKey, setShippyProApiKey] = React.useState<string>("");
+  const [paymentAlreadySubmitted, setPaymentAlreadySubmitted] =
+    React.useState<boolean>(false);
   const [customerAddress, setCustomerAddress] = React.useState({
     firstName: "",
     lastName: "",
@@ -445,6 +459,7 @@ const MuiCheckout: React.FunctionComponent<ICheckoutProps> = (props) => {
     billingAsShipping,
     setBillingAsShippingAddress,
     checkout,
+    payment,
     createPayment,
     completeCheckout,
     loaded: checkoutLoaded,
@@ -514,21 +529,27 @@ const MuiCheckout: React.FunctionComponent<ICheckoutProps> = (props) => {
   }, []);
 
   React.useEffect(() => {
+    if (value === 'payment' && !isPaymentStepRequired) {
+      // E.g. adding Promo Code on Payment step resulting in 0$
+      // should return user back to Shipping step (with no further Payment step)
+      setValue('shipping');
+    }
+  }, [isPaymentStepRequired, value]);
+
+  React.useEffect(() => {
     if (value === "shipping") {
       resetSecondaryLocationSelectedForSellers();
     }
   }, [value]);
 
   React.useEffect(() => {
-    if (
-      params.get("payment_intent") &&
-      params.get("payment_intent_client_secret") &&
-      checkout
-    ) {
-      handleCreatePayment(
-        "nautical.payments.stripe",
-        params.get("payment_intent")
-      );
+    const haveNeededPayment =
+      (params.get("payment_intent") &&
+        params.get("payment_intent_client_secret")) ||
+      payment?.token;
+    const paymentToken = params.get("payment_intent") || payment?.token;
+    if (haveNeededPayment && checkout) {
+      handleCreatePayment("nautical.payments.stripe", paymentToken);
     }
   }, [params, checkout]);
 
@@ -600,21 +621,20 @@ const MuiCheckout: React.FunctionComponent<ICheckoutProps> = (props) => {
     shippingMethodsBySeller,
     sellerId
   ) => {
-    // IN SHIPPYPRO THUS FAR IT APPEARS THE CARRIERS WITH SERVICES THAT
-    // INCLUDE THE WORD "RELIAS" ARE THE ONES THAT SUPPORT DROP OFF POINTS
-    const dropOffPointServiceIndicator = "Relais";
     const shippingMethodsForSeller = shippingMethodsBySeller.find(
       (shippingMethodBySeller) => shippingMethodBySeller.seller === sellerId
     ).value;
     return shippingMethodsForSeller.find(
       (shippingMethodForSeller) =>
         shippingMethodForSeller.name.includes(selectedCourier) &&
-        shippingMethodForSeller.name.includes(dropOffPointServiceIndicator)
+        shippingMethodForSeller.requiresSecondaryAddress
     ).id;
   };
 
   // EVENT HANDLERS
   const handleChange = async (event, newValue, values = null) => {
+    setPaymentFormError(false);
+    setErrorMessages([]);
     if (shippyProPluginActive && shippyProLoaded !== "false") {
       // MAKE SURE SHIPPYPRO MAP REMAINS AT A HEIGHT OF 100%...
       // FOR SOME REASON, ONCE YOU OPEN MAP AND THEN GO TO NEXT CHECKOUT
@@ -701,19 +721,28 @@ const MuiCheckout: React.FunctionComponent<ICheckoutProps> = (props) => {
           checkout.sellerShippingMethods
         );
 
-        const allSelectedShippingMethodsAllowed = sellerShippingMethods.every((selectedSellerShippingMethod) => {
-          const sellerAvailableShippingMethods = availableShippingMethodsBySeller.find((availableSellerShippingMethods) =>
-            // TODO: JSON.parse returns `seller` as a string, while it should be number
-            Number(selectedSellerShippingMethod.seller) === availableSellerShippingMethods.seller
-          );
-          return sellerAvailableShippingMethods?.value.some((sellerAvailableShippingMethod) =>
-            sellerAvailableShippingMethod.id === selectedSellerShippingMethod.shippingMethod.id
-          );
-        });
+        const allSelectedShippingMethodsAllowed = sellerShippingMethods.every(
+          (selectedSellerShippingMethod) => {
+            const sellerAvailableShippingMethods =
+              availableShippingMethodsBySeller.find(
+                (availableSellerShippingMethods) =>
+                  // TODO: JSON.parse returns `seller` as a string, while it should be number
+                  Number(selectedSellerShippingMethod.seller) ===
+                  availableSellerShippingMethods.seller
+              );
+            return sellerAvailableShippingMethods?.value.some(
+              (sellerAvailableShippingMethod) =>
+                sellerAvailableShippingMethod.id ===
+                selectedSellerShippingMethod.shippingMethod.id
+            );
+          }
+        );
 
         if (!allSelectedShippingMethodsAllowed) {
           setShippingFormError(true);
-          setErrorMessages(["Please select available shipping method(s). Selected shipping method(s) is not available in your country."]);
+          setErrorMessages([
+            "Please select available shipping method(s).",
+          ]);
           return;
         }
 
@@ -740,9 +769,9 @@ const MuiCheckout: React.FunctionComponent<ICheckoutProps> = (props) => {
           setErrorMessages([]);
         } else {
           setShippingFormError(true);
-          setErrorMessages(
-            ["Please make sure you select your drop-off point(s) from the map(s)."]
-          );
+          setErrorMessages([
+            "Please make sure you select a shipping method for each vendor and if required, a drop-off point for each drop-off point map.",
+          ]);
         }
       }
       if (newValue === "customer") {
@@ -836,6 +865,68 @@ const MuiCheckout: React.FunctionComponent<ICheckoutProps> = (props) => {
     setValue(newValue);
   };
 
+  const handleCompleteCheckoutWithoutPayment = async (values) => {
+    const billingSubmission = await setBillingAddress(
+      {
+        firstName: values.firstName,
+        lastName: values.lastName,
+        companyName: values.companyName,
+        streetAddress1: values.streetAddress1,
+        streetAddress2: values.streetAddress2,
+        city: values.city,
+        postalCode: values.postalCode,
+        countryArea: values.countryArea,
+        phone: values.phone,
+        country: values.country,
+      },
+      values.email
+    );
+    if (billingSubmission.dataError?.error) {
+      handleErrors(billingSubmission.dataError?.error);
+      setShippingFormError(true);
+      return;
+    }
+    return handleCompleteCheckout();
+  };
+
+  const handleCompleteCheckout = async (input?: CompleteCheckoutInput) => {
+    const response = await completeCheckout(input);
+    if (response.dataError?.error) {
+      handleErrors(response.dataError?.error);
+      if (isPaymentStepRequired) {
+        setPaymentFormError(true);
+      } else {
+        setShippingFormError(true);
+      }
+      return;
+    }
+
+    if (loyaltyAndReferralsActive) {
+      if (user) {
+        awardCustomerLoyaltyPoints({
+          input: {
+            customerEmail: user.email,
+            pointAdjustmentAmount: loyaltyPointsToBeEarnedOnOrderComplete,
+            applyAdjustmentToPointsEarned: true,
+          },
+        });
+      }
+    }
+    // Reset checkout for subsequent checkouts
+    navigate("/order-finalized/", {
+      // navigate("/order-history/" + response.data?.order?.token, {
+      replace: true,
+      state: {
+        confirmationData: response.data?.confirmationData,
+        confirmationNeeded: response.data?.confirmationNeeded,
+        order: response.data?.order,
+        errors: response.dataError?.error,
+        token: response.data?.order?.token,
+        orderNumber: response.data?.order?.number,
+      },
+    });
+  };
+
   const handleCreatePayment = async (
     gateway: string,
     token?: string,
@@ -854,45 +945,7 @@ const MuiCheckout: React.FunctionComponent<ICheckoutProps> = (props) => {
     errors = dataError?.error;
 
     if (!errors) {
-      const response = await completeCheckout({
-        poNumber: poNumber,
-      });
-      if (!response.dataError?.error) {
-        if (loyaltyAndReferralsActive) {
-          if (user) {
-            awardCustomerLoyaltyPoints({
-              input: {
-                customerEmail: user.email,
-                pointAdjustmentAmount: loyaltyPointsToBeEarnedOnOrderComplete,
-                applyAdjustmentToPointsEarned: true,
-              },
-            });
-          }
-        }
-        // Reset checkout for subsequent checkouts
-        navigate("/order-finalized/", {
-          // navigate("/order-history/" + response.data?.order?.token, {
-          replace: true,
-          state: {
-            confirmationData: response.data?.confirmationData,
-            confirmationNeeded: response.data?.confirmationNeeded,
-            order: response.data?.order,
-            errors: response.dataError?.error,
-            token: response.data?.order?.token,
-            orderNumber: response.data?.order?.number,
-          },
-        });
-      } else {
-        errors = response.dataError?.error;
-        handleErrors(errors);
-        setPaymentFormError(errors.length > 0);
-      }
-      // return {
-      //     confirmationData: response.data?.confirmationData,
-      //     confirmationNeeded: response.data?.confirmationNeeded,
-      //     order: response.data?.order,
-      //     errors: response.dataError?.error,
-      // };
+      handleCompleteCheckout({ poNumber });
     } else {
       handleErrors(errors);
       setPaymentFormError(errors.length > 0);
@@ -900,23 +953,36 @@ const MuiCheckout: React.FunctionComponent<ICheckoutProps> = (props) => {
   };
 
   const handleErrors = (errors: IFormError[]) => {
-    const messages = maybe(() => errors.flatMap((error) => {
-      if (!!error.field) {
-        return error.message + " - " + error.field
-      } else {
-        return error.message
-      }
-    }), []);
-    const errorVariants = maybe(() => errors.flatMap((error) => error.variants), []);
-    const variantNames = errorVariants.map(errorVariant => {
-      const problemVariant = items.find(item => item.variant.id === errorVariant);
+    const messages = maybe(
+      () =>
+        errors.flatMap((error) => {
+          if (!!error.field) {
+            return error.message + " - " + error.field;
+          } else {
+            return error.message;
+          }
+        }),
+      []
+    );
+    const errorVariants = maybe(
+      () => errors.flatMap((error) => error.variants),
+      []
+    );
+    const variantNames = errorVariants.map((errorVariant) => {
+      const problemVariant = items.find(
+        (item) => item.variant.id === errorVariant
+      );
       if (!!problemVariant) {
-        return problemVariant.variant.product.name + " - " + problemVariant.variant.name;
+        return (
+          problemVariant.variant.product.name +
+          " - " +
+          problemVariant.variant.name
+        );
       } else {
-        return ""
+        return "";
       }
     });
-    const errorMessages = messages.concat(variantNames)
+    const errorMessages = messages.concat(variantNames);
     setErrorMessages(errorMessages);
   };
 
@@ -1123,10 +1189,15 @@ const MuiCheckout: React.FunctionComponent<ICheckoutProps> = (props) => {
     setTimeout(() => setSubmitting(false), 5000);
   }
 
-  // @ts-ignore
-  const existingShippingChoices = checkout?.sellerShippingMethods ? Object.fromEntries(JSON.parse(checkout.sellerShippingMethods).map(method =>
-    ["shippingMethod" + method.seller, method.shippingMethod.id]
-  )) : {};
+  const existingShippingChoices = checkout?.sellerShippingMethods
+    ? Object.fromEntries(
+        // @ts-ignore
+        JSON.parse(checkout.sellerShippingMethods).map((method) => [
+          "shippingMethod" + method.seller,
+          method.shippingMethod.id,
+        ])
+      )
+    : {};
 
   return (
     <>
@@ -1152,7 +1223,11 @@ const MuiCheckout: React.FunctionComponent<ICheckoutProps> = (props) => {
           }}
         >
           <Card>
-            <CardContent>{intl.formatMessage(checkoutMessages.areYouSureYouWantToExitCheckout)}</CardContent>
+            <CardContent>
+              {intl.formatMessage(
+                checkoutMessages.areYouSureYouWantToExitCheckout
+              )}
+            </CardContent>
             <CardActions
               className={classes.popoverActions}
               style={{ justifyContent: "space-around" }}
@@ -1208,9 +1283,23 @@ const MuiCheckout: React.FunctionComponent<ICheckoutProps> = (props) => {
                 </Box>
               </Breadcrumbs>
               <Tabs variant="fullWidth" className={classes.tabs} value={value}>
-                <Tab value="customer" label={intl.formatMessage(checkoutMessages.stepNameCustomer)} disableRipple />
-                <Tab value="shipping" label={intl.formatMessage(checkoutMessages.stepNameShipping)} disableRipple />
-                <Tab value="payment" label={intl.formatMessage(checkoutMessages.stepNamePayment)} disableRipple />
+                <Tab
+                  value="customer"
+                  label={intl.formatMessage(checkoutMessages.stepNameCustomer)}
+                  disableRipple
+                />
+                <Tab
+                  value="shipping"
+                  label={intl.formatMessage(checkoutMessages.stepNameShipping)}
+                  disableRipple
+                />
+                {isPaymentStepRequired && (
+                  <Tab
+                    value="payment"
+                    label={intl.formatMessage(checkoutMessages.stepNamePayment)}
+                    disableRipple
+                  />
+                )}
               </Tabs>
             </Box>
             <Formik
@@ -1228,9 +1317,12 @@ const MuiCheckout: React.FunctionComponent<ICheckoutProps> = (props) => {
                 postalCode: checkout?.shippingAddress?.postalCode || "",
                 countryArea: checkout?.shippingAddress?.countryArea || "",
                 phone: checkout?.shippingAddress?.phone || "",
-                country: countries.find(country => country.code === checkout?.shippingAddress?.country?.code) || {
+                country: countries.find(
+                  (country) =>
+                    country.code === checkout?.shippingAddress?.country?.code
+                ) || {
                   code: "",
-                  country:  "",
+                  country: "",
                 },
                 // BILLING ADDRESS FIELDS
                 billingAsShipping: billingAsShipping || true,
@@ -1245,12 +1337,15 @@ const MuiCheckout: React.FunctionComponent<ICheckoutProps> = (props) => {
                 billingPostalCode: checkout?.billingAddress?.postalCode || "",
                 billingCountryArea: checkout?.billingAddress?.countryArea || "",
                 billingPhone: checkout?.billingAddress?.phone || "",
-                billingCountry: countries.find(country => country.code === checkout?.billingAddress?.country?.code) || {
+                billingCountry: countries.find(
+                  (country) =>
+                    country.code === checkout?.billingAddress?.country?.code
+                ) || {
                   code: "",
                   country: "",
                 },
                 // SHIPPING FIELDS
-                ...existingShippingChoices
+                ...existingShippingChoices,
                 // PAYMENT FIELDS
               }}
               onSubmit={handleSubmit}
@@ -1464,7 +1559,9 @@ const MuiCheckout: React.FunctionComponent<ICheckoutProps> = (props) => {
                         >
                           <Alert severity="error">
                             {errorMessages
-                              ? errorMessages.map(message => <Box>{message}</Box>)
+                              ? errorMessages.map((message) => (
+                                  <Box>{message}</Box>
+                                ))
                               : intl.formatMessage(
                                   commonMessages.pleaseEnsureAllRequiredFieldsAreEntered
                                 )}
@@ -1492,7 +1589,9 @@ const MuiCheckout: React.FunctionComponent<ICheckoutProps> = (props) => {
                     <TabPanel value={value} index="shipping">
                       <Box mb={2}>
                         <Typography className={classes.title} variant="h6">
-                          {intl.formatMessage(checkoutMessages.shippingInformation)}
+                          {intl.formatMessage(
+                            checkoutMessages.shippingInformation
+                          )}
                         </Typography>
                       </Box>
                       {availableShippingMethodsBySeller?.map((sellerMethod) => (
@@ -1500,15 +1599,27 @@ const MuiCheckout: React.FunctionComponent<ICheckoutProps> = (props) => {
                           variables={{ id: String(sellerMethod.seller) }}
                         >
                           {({ data, loading, error }) => {
-                            // @ts-ignore
-                            const requiresSecondaryAddress = JSON.parse(
+                            const selectedShippingMethod = JSON.parse(
                               // @ts-ignore
                               checkout.sellerShippingMethods
                             ).find(
                               (sellerShippingMethod) =>
                                 sellerShippingMethod.seller.toString() ===
                                 sellerMethod.seller.toString()
-                            )?.shippingMethod.requires_secondary_address;
+                            );
+                            // @ts-ignore
+                            const requiresSecondaryAddress = selectedShippingMethod?.shippingMethod.requires_secondary_address;
+
+                            const isShippingMethodSelected = !!selectedShippingMethod;
+                            const isSelectedShippingMethodAvailable =
+                              sellerMethod.value.some((option) => option.id === selectedShippingMethod?.shippingMethod.id);
+                            let helperText;
+                            if (!sellerMethod.value.length) {
+                              helperText = "No available shipping methods. Please contact support.";
+                            } else if (isShippingMethodSelected && !isSelectedShippingMethodAvailable) {
+                              helperText = "Selected shipping method is no longer available for the selected country and selected quantity.";
+                            }
+
                             return (
                               <Box>
                                 <Box mb={2}>
@@ -1530,11 +1641,15 @@ const MuiCheckout: React.FunctionComponent<ICheckoutProps> = (props) => {
                                         "shippingMethod" +
                                         String(sellerMethod.seller)
                                       }
-                                      label={intl.formatMessage(checkoutMessages.shippingMethod)}
+                                      label={intl.formatMessage(
+                                        checkoutMessages.shippingMethod
+                                      )}
                                       variant="outlined"
                                       InputLabelProps={{ shrink: true }}
                                       select
                                       required
+                                      disabled={!sellerMethod.value.length}
+                                      helperText={helperText}
                                     >
                                       {sellerMethod.value.map((option) => (
                                         <MenuItem
@@ -1676,12 +1791,17 @@ const MuiCheckout: React.FunctionComponent<ICheckoutProps> = (props) => {
                         </TypedSellerNameQuery>
                       ))}
                       <Box
+                        mb={1.4}
                         style={{
                           display: shippingFormError ? "block" : "none",
                         }}
                         className={classes.gridspan}
                       >
-                        <Alert severity="error">{errorMessages.map(message => <Box>{message}</Box>)}</Alert>
+                        <Alert severity="error">
+                          {errorMessages.map((message) => (
+                            <Box>{message}</Box>
+                          ))}
+                        </Alert>
                       </Box>
                       <Box className={classes.fieldsGrid}>
                         <Button
@@ -1690,19 +1810,36 @@ const MuiCheckout: React.FunctionComponent<ICheckoutProps> = (props) => {
                           className={classes.buttonText}
                           onClick={(e) => handleChange(e, "customer")}
                         >
-                          <KeyboardBackspaceIcon /> {intl.formatMessage(checkoutMessages.backToInformation)}
+                          <KeyboardBackspaceIcon />{" "}
+                          {intl.formatMessage(
+                            checkoutMessages.backToInformation
+                          )}
                         </Button>
                         <Button
                           color="primary"
                           disableElevation
+                          type={isPaymentStepRequired ? "button" : "submit"}
                           className={classes.button}
                           variant="contained"
-                          onClick={(e) => handleChange(e, "payment", values)}
+                          onClick={(e) =>
+                            isPaymentStepRequired
+                              ? handleChange(e, "payment", values)
+                              : handleCompleteCheckoutWithoutPayment(values)
+                          }
+                          disabled={isSubmitting || loading}
                         >
                           <LockIcon
                             style={{ height: 16, width: 16, marginRight: 12 }}
                           />{" "}
-                          {intl.formatMessage(commonMessages.continue)}
+                          {/* Loading in case when shipping method is changed,
+                              submitting in case when form is submitted */}
+                          {(isSubmitting || loading ) ? (
+                            <CircularProgress />
+                          ) : isPaymentStepRequired ? (
+                            intl.formatMessage(commonMessages.continue)
+                          ) : (
+                            intl.formatMessage(checkoutMessages.confirmOrder)
+                          )}
                         </Button>
                       </Box>
                     </TabPanel>
@@ -1734,267 +1871,349 @@ const MuiCheckout: React.FunctionComponent<ICheckoutProps> = (props) => {
                                 </Card>
                             </Box>
                       </Box> */}
-                      {availablePaymentGateways?.map(({ id, name, config }) => {
-                        switch (name) {
-                          case "Stripe":
-                            return (
-                              <StripePaymentGateway
-                                config={config}
-                                formRef={checkoutGatewayFormRef}
-                                formId={checkoutGatewayFormId}
-                                processPayment={(token, cardData) => {
-                                  handleProcessPayment(id, token, cardData);
-                                }}
-                                errors={[]}
-                                onError={(errors) => handleErrors(errors)}
-                                total={total}
-                              />
-                            );
-                          case "Authorize.Net":
-                            return (
-                              <AuthorizeNetPaymentGateway
-                                config={config}
-                                formRef={checkoutGatewayFormRef}
-                                formId={checkoutGatewayFormId}
-                                processPayment={(token, cardData) =>
-                                  handleProcessPayment(id, token, cardData)
-                                }
-                                errors={[]}
-                                onError={(errors) => handleErrors(errors)}
-                              />
-                            );
-                          case "Purchase Order":
-                            return (
-                              <PurchaseOrderGateway
-                                formRef={checkoutGatewayFormRef}
-                                formId={checkoutGatewayFormId}
-                                processPayment={(token, poNumber) =>
-                                  handleProcessPayment(
-                                    id,
-                                    token,
-                                    null,
-                                    poNumber
-                                  )
-                                }
-                              />
-                            );
-                          default:
-                            return null;
-                        }
-                      })}
-                      {!!errorMessages && 
-                        <Box
-                          mb={3}
-                          style={{ display: paymentFormError ? "block" : "none" }}
-                          className={classes.gridspan}
-                        >
-                          <Alert severity="error">{errorMessages.map(message => <Box>{message}</Box>)}</Alert>
-                        </Box>}
-                      <Box mb={2}>
-                        <Typography className={classes.title} variant="h6">
-                          {intl.formatMessage(checkoutMessages.billingAddress)}
-                        </Typography>
-                      </Box>
-                      <FormControlLabel
-                        control={
-                          <Switch
-                            checked={billingAsShipping}
-                            onChange={async () =>
-                              await setBillingAsShippingAddress(
-                                !billingAsShipping
-                              )
-                            }
-                          />
-                        }
-                        label={intl.formatMessage(
-                          checkoutMessages.sameAsShippingAddress
-                        )}
-                        style={{ marginBottom: "16px" }}
-                      />
-                      {!billingAsShipping && (
+                      {paymentAlreadySubmitted &&
+                      !payment?.token &&
+                      !isSubmitting ? (
+                        <Box mb={2}>
+                          <Typography>
+                            {intl.formatMessage({
+                              defaultMessage:
+                                "There appears to be an issue with your checkout. This could potentially happen if you previously interrupted an already-in-process checkout, such as by hitting the Back button in your browser when submitting your order. Please click CONTINUE SHOPPING to return home. Your Cart will be maintained and you can enter into a new checkout.",
+                            })}
+                          </Typography>
+                        </Box>
+                      ) : payment?.token && !isSubmitting ? (
+                        <Box mb={2}>
+                          <Typography>
+                            {intl.formatMessage({
+                              defaultMessage:
+                                "It appears you already submitted your payment information. Press the CONFIRM ORDER button to complete your order.",
+                            })}
+                          </Typography>
+                        </Box>
+                      ) : (
                         <>
-                          <Box className={classes.fieldsGrid}>
-                            <Field
-                              required
-                              autoComplete="billing given-name"
-                              className={classes.textfield}
-                              component={TextField}
-                              name="billingFirstName"
-                              label={intl.formatMessage(
-                                commonMessages.firstName
-                              )}
-                              variant="outlined"
-                              InputLabelProps={{
-                                shrink: true,
-                              }}
-                            />
-                            <Field
-                              className={classes.textfield}
-                              autoComplete="billing family-name"
-                              component={TextField}
-                              required
-                              name="billingLastName"
-                              label={intl.formatMessage(
-                                commonMessages.lastName
-                              )}
-                              variant="outlined"
-                              InputLabelProps={{
-                                shrink: true,
-                              }}
-                            />
-                            <Field
-                              className={clsx(
-                                classes.textfield,
-                                classes.gridspan
-                              )}
-                              autoComplete="billing address-line1"
-                              component={TextField}
-                              required
-                              name="billingStreetAddress1"
-                              label={intl.formatMessage(
-                                checkoutMessages.addressLine,
-                                { number: 1 }
-                              )}
-                              variant="outlined"
-                              InputLabelProps={{ shrink: true }}
-                            />
-                            <Field
-                              className={clsx(
-                                classes.textfield,
-                                classes.gridspan
-                              )}
-                              autoComplete="billing address-line2"
-                              component={TextField}
-                              name="billingStreetAddress2"
-                              label={intl.formatMessage(
-                                checkoutMessages.addressLine,
-                                { number: 2 }
-                              )}
-                              variant="outlined"
-                              InputLabelProps={{ shrink: true }}
-                            />
-                            {isAddressFieldRequired("city", "billing") && (
-                              <Field
-                                className={classes.textfield}
-                                component={TextField}
-                                required
-                                name="billingCity"
-                                autoComplete="billing address-level2"
-                                label={intl.formatMessage(
-                                  checkoutMessages.city
-                                )}
-                                variant="outlined"
-                                InputLabelProps={{ shrink: true }}
-                              />
-                            )}
-                            {isAddressFieldRequired("state", "billing") && (
-                              <Field
-                                className={classes.textfield}
-                                component={TextField}
-                                name="billingCountryArea"
-                                required
-                                autoComplete="billing address-level1"
-                                label={intl.formatMessage(
-                                  checkoutMessages.stateProvinceArea
-                                )}
-                                variant="outlined"
-                                InputLabelProps={{ shrink: true }}
-                              />
-                            )}
-                            {isAddressFieldRequired("zip", "billing") && (
-                              <Field
-                                className={classes.textfield}
-                                component={TextField}
-                                required
-                                name="billingPostalCode"
-                                label={intl.formatMessage(
-                                  checkoutMessages.zipPostalCode
-                                )}
-                                autoComplete="billing postal-code"
-                                variant="outlined"
-                                InputLabelProps={{ shrink: true }}
-                              />
-                            )}
-                            {!!countries && (
-                              <Field
-                                className={classes.textfield}
-                                component={TextField}
-                                name="billingCountry"
-                                label={intl.formatMessage(
-                                  checkoutMessages.country
-                                )}
-                                variant="outlined"
-                                required
-                                // NEED TO FIGURE OUT HOW AUTOCOMPLETE INTERACTS WITH DROPDOWN SELECTOR
-                                autoComplete="billing country"
-                                InputLabelProps={{ shrink: true }}
-                                select
-                              >
-                                {countries?.map((option) => (
-                                  // @ts-ignore
-                                  <MenuItem key={option.code} value={option}>
-                                    {option.country}
-                                  </MenuItem>
-                                ))}
-                              </Field>
-                            )}
-                          </Box>
-                          <Box className={classes.fieldsGrid}>
-                            <Field
-                              className={classes.textfield}
-                              component={TextField}
-                              required
-                              name="billingPhone"
-                              label={intl.formatMessage(commonMessages.phone)}
-                              type="tel"
-                              autoComplete="billing tel-national"
-                              variant="outlined"
-                              InputLabelProps={{ shrink: true }}
-                            />
+                          {availablePaymentGateways?.map(
+                            ({ id, name, config }) => {
+                              switch (name) {
+                                case "Stripe":
+                                  return (
+                                    <StripePaymentGateway
+                                      config={config}
+                                      formRef={checkoutGatewayFormRef}
+                                      formId={checkoutGatewayFormId}
+                                      processPayment={(token, cardData) => {
+                                        handleProcessPayment(
+                                          id,
+                                          token,
+                                          cardData
+                                        );
+                                      }}
+                                      errors={[]}
+                                      onError={(errors) => handleErrors(errors)}
+                                      total={total}
+                                      setPaymentAlreadySubmitted={
+                                        setPaymentAlreadySubmitted
+                                      }
+                                    />
+                                  );
+                                case "Authorize.Net":
+                                  return (
+                                    <AuthorizeNetPaymentGateway
+                                      config={config}
+                                      formRef={checkoutGatewayFormRef}
+                                      formId={checkoutGatewayFormId}
+                                      processPayment={(token, cardData) =>
+                                        handleProcessPayment(
+                                          id,
+                                          token,
+                                          cardData
+                                        )
+                                      }
+                                      errors={[]}
+                                      onError={(errors) => handleErrors(errors)}
+                                    />
+                                  );
+                                case "Purchase Order":
+                                  return (
+                                    <PurchaseOrderGateway
+                                      formRef={checkoutGatewayFormRef}
+                                      formId={checkoutGatewayFormId}
+                                      processPayment={(token, poNumber) =>
+                                        handleProcessPayment(
+                                          id,
+                                          token,
+                                          null,
+                                          poNumber
+                                        )
+                                      }
+                                    />
+                                  );
+                                default:
+                                  return null;
+                              }
+                            }
+                          )}
+                          {!!errorMessages && (
                             <Box
+                              mb={3}
                               style={{
-                                display: billingFormError ? "block" : "none",
+                                display: paymentFormError ? "block" : "none",
                               }}
                               className={classes.gridspan}
                             >
                               <Alert severity="error">
-                                {errorMessages
-                                  ? errorMessages.map(message => <Box>{message}</Box>)
-                                  : intl.formatMessage(
-                                      commonMessages.pleaseEnsureAllRequiredFieldsAreEntered
-                                    )}
+                                {errorMessages.map((message) => (
+                                  <Box>{message}</Box>
+                                ))}
                               </Alert>
                             </Box>
+                          )}
+                          <Box mb={2}>
+                            <Typography className={classes.title} variant="h6">
+                              {intl.formatMessage(
+                                checkoutMessages.billingAddress
+                              )}
+                            </Typography>
                           </Box>
+                          <FormControlLabel
+                            control={
+                              <Switch
+                                checked={billingAsShipping}
+                                onChange={async () =>
+                                  await setBillingAsShippingAddress(
+                                    !billingAsShipping
+                                  )
+                                }
+                              />
+                            }
+                            label={intl.formatMessage(
+                              checkoutMessages.sameAsShippingAddress
+                            )}
+                            style={{ marginBottom: "16px" }}
+                          />
+                          {!billingAsShipping && (
+                            <>
+                              <Box className={classes.fieldsGrid}>
+                                <Field
+                                  required
+                                  autoComplete="billing given-name"
+                                  className={classes.textfield}
+                                  component={TextField}
+                                  name="billingFirstName"
+                                  label={intl.formatMessage(
+                                    commonMessages.firstName
+                                  )}
+                                  variant="outlined"
+                                  InputLabelProps={{
+                                    shrink: true,
+                                  }}
+                                />
+                                <Field
+                                  className={classes.textfield}
+                                  autoComplete="billing family-name"
+                                  component={TextField}
+                                  required
+                                  name="billingLastName"
+                                  label={intl.formatMessage(
+                                    commonMessages.lastName
+                                  )}
+                                  variant="outlined"
+                                  InputLabelProps={{
+                                    shrink: true,
+                                  }}
+                                />
+                                <Field
+                                  className={clsx(
+                                    classes.textfield,
+                                    classes.gridspan
+                                  )}
+                                  autoComplete="billing address-line1"
+                                  component={TextField}
+                                  required
+                                  name="billingStreetAddress1"
+                                  label={intl.formatMessage(
+                                    checkoutMessages.addressLine,
+                                    { number: 1 }
+                                  )}
+                                  variant="outlined"
+                                  InputLabelProps={{ shrink: true }}
+                                />
+                                <Field
+                                  className={clsx(
+                                    classes.textfield,
+                                    classes.gridspan
+                                  )}
+                                  autoComplete="billing address-line2"
+                                  component={TextField}
+                                  name="billingStreetAddress2"
+                                  label={intl.formatMessage(
+                                    checkoutMessages.addressLine,
+                                    { number: 2 }
+                                  )}
+                                  variant="outlined"
+                                  InputLabelProps={{ shrink: true }}
+                                />
+                                {isAddressFieldRequired("city", "billing") && (
+                                  <Field
+                                    className={classes.textfield}
+                                    component={TextField}
+                                    required
+                                    name="billingCity"
+                                    autoComplete="billing address-level2"
+                                    label={intl.formatMessage(
+                                      checkoutMessages.city
+                                    )}
+                                    variant="outlined"
+                                    InputLabelProps={{ shrink: true }}
+                                  />
+                                )}
+                                {isAddressFieldRequired("state", "billing") && (
+                                  <Field
+                                    className={classes.textfield}
+                                    component={TextField}
+                                    name="billingCountryArea"
+                                    required
+                                    autoComplete="billing address-level1"
+                                    label={intl.formatMessage(
+                                      checkoutMessages.stateProvinceArea
+                                    )}
+                                    variant="outlined"
+                                    InputLabelProps={{ shrink: true }}
+                                  />
+                                )}
+                                {isAddressFieldRequired("zip", "billing") && (
+                                  <Field
+                                    className={classes.textfield}
+                                    component={TextField}
+                                    required
+                                    name="billingPostalCode"
+                                    label={intl.formatMessage(
+                                      checkoutMessages.zipPostalCode
+                                    )}
+                                    autoComplete="billing postal-code"
+                                    variant="outlined"
+                                    InputLabelProps={{ shrink: true }}
+                                  />
+                                )}
+                                {!!countries && (
+                                  <Field
+                                    className={classes.textfield}
+                                    component={TextField}
+                                    name="billingCountry"
+                                    label={intl.formatMessage(
+                                      checkoutMessages.country
+                                    )}
+                                    variant="outlined"
+                                    required
+                                    // NEED TO FIGURE OUT HOW AUTOCOMPLETE INTERACTS WITH DROPDOWN SELECTOR
+                                    autoComplete="billing country"
+                                    InputLabelProps={{ shrink: true }}
+                                    select
+                                  >
+                                    {countries?.map((option) => (
+                                      // @ts-ignore
+                                      <MenuItem
+                                        key={option.code}
+                                        value={option}
+                                      >
+                                        {option.country}
+                                      </MenuItem>
+                                    ))}
+                                  </Field>
+                                )}
+                              </Box>
+                              <Box className={classes.fieldsGrid}>
+                                <Field
+                                  className={classes.textfield}
+                                  component={TextField}
+                                  required
+                                  name="billingPhone"
+                                  label={intl.formatMessage(
+                                    commonMessages.phone
+                                  )}
+                                  type="tel"
+                                  autoComplete="billing tel-national"
+                                  variant="outlined"
+                                  InputLabelProps={{ shrink: true }}
+                                />
+                                <Box
+                                  style={{
+                                    display: billingFormError
+                                      ? "block"
+                                      : "none",
+                                  }}
+                                  className={classes.gridspan}
+                                >
+                                  <Alert severity="error">
+                                    {errorMessages
+                                      ? errorMessages.map((message) => (
+                                          <Box>{message}</Box>
+                                        ))
+                                      : intl.formatMessage(
+                                          commonMessages.pleaseEnsureAllRequiredFieldsAreEntered
+                                        )}
+                                  </Alert>
+                                </Box>
+                              </Box>
+                            </>
+                          )}
                         </>
                       )}
-                      <Box className={classes.fieldsGrid}>
-                        <Button
-                          disableRipple
-                          disableElevation
-                          className={classes.buttonText}
-                          onClick={(e) => handleChange(e, "shipping")}
-                        >
-                          <KeyboardBackspaceIcon /> {intl.formatMessage(checkoutMessages.backToShipping)}
-                        </Button>
-                        <Button
-                          color="primary"
-                          type="submit"
-                          disableElevation
-                          className={classes.button}
-                          variant="contained"
-                          disabled={isSubmitting || !availablePaymentGateways}
-                        >
-                          <LockIcon
-                            style={{ height: 16, width: 16, marginRight: 12 }}
-                          />{" "}
-                          {isSubmitting ? (
-                            <CircularProgress />
-                          ) : (
-                            intl.formatMessage(checkoutMessages.confirmPayment)
-                          )}
-                        </Button>
-                      </Box>
+                      {paymentAlreadySubmitted && !payment?.token ? (
+                        <Box className={classes.fieldsGrid}>
+                          <Box></Box>
+                          <Button
+                            color="primary"
+                            disableElevation
+                            className={classes.button}
+                            variant="contained"
+                            onClick={() => {
+                              localStorage.removeItem("nauticalPaymentId");
+                              navigate("/");
+                            }}
+                          >
+                            {intl.formatMessage({
+                              defaultMessage: "CONTINUE SHOPPING",
+                            })}
+                          </Button>
+                        </Box>
+                      ) : (
+                        <Box className={classes.fieldsGrid}>
+                          <Button
+                            disableRipple
+                            disableElevation
+                            className={classes.buttonText}
+                            onClick={(e) => handleChange(e, "shipping")}
+                          >
+                            <KeyboardBackspaceIcon />{" "}
+                            {intl.formatMessage(
+                              checkoutMessages.backToShipping
+                            )}
+                          </Button>
+                          <Button
+                            color="primary"
+                            type="submit"
+                            disableElevation
+                            className={classes.button}
+                            variant="contained"
+                            disabled={isSubmitting || !availablePaymentGateways}
+                          >
+                            <LockIcon
+                              style={{ height: 16, width: 16, marginRight: 12 }}
+                            />{" "}
+                            {isSubmitting ? (
+                              <CircularProgress />
+                            ) : payment?.token ? (
+                              intl.formatMessage(checkoutMessages.confirmOrder)
+                            ) : (
+                              intl.formatMessage(
+                                checkoutMessages.confirmPayment
+                              )
+                            )}
+                          </Button>
+                        </Box>
+                      )}
                     </TabPanel>
                   </Form>
                 );
@@ -2016,7 +2235,9 @@ const MuiCheckout: React.FunctionComponent<ICheckoutProps> = (props) => {
         </Box>
       ) : (
         <Box style={{ margin: "auto" }}>
-          <Typography variant="h4">{intl.formatMessage(checkoutMessages.confirmingYourPayment)}</Typography>
+          <Typography variant="h4">
+            {intl.formatMessage(checkoutMessages.confirmingYourPayment)}
+          </Typography>
           <Loader />
         </Box>
       )}

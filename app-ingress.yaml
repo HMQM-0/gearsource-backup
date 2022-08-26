@@ -1,0 +1,15 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  annotations:
+    kubernetes.io/ingress.allow-http: "false"
+    kubernetes.io/ingress.global-static-ip-name: GLOBAL STATIC IP ADDRESS
+    networking.gke.io/managed-certificates: CERTIFICATE NAME
+  name: INGRESS NAME
+  namespace: default
+spec:
+  defaultBackend:
+    service:
+      name: SERVICE NAME
+      port: 
+        number: 80

@@ -111,6 +111,8 @@ export interface GetShop_shop {
    */
   geolocalization: GetShop_shop_geolocalization | null;
 
+  loginForCheckout: boolean;
+
   loginForPrice: boolean;
 
   loginForProducts: boolean;

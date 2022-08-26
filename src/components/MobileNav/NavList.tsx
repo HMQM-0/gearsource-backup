@@ -85,6 +85,7 @@ class NavList extends React.PureComponent<NavListProps, NavListState> {
                 paddingTop: "16px",
                 paddingLeft: "16px",
                 paddingRight: "16px",
+                fontSize: "12px",
               }}
             >
               {/* <Link

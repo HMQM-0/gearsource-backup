@@ -179,7 +179,7 @@ export const checkoutMessages = defineMessages({
     defaultMessage: "Continue to Shipping",
   },
   backToShipping: {
-    defaultMessage: "Back to Shipping"
+    defaultMessage: "Back to Shipping",
   },
   shippingNextActionName: {
     defaultMessage: "Continue to Payment",
@@ -252,6 +252,9 @@ export const checkoutMessages = defineMessages({
   },
   confirmPayment: {
     defaultMessage: "Confirm Payment",
+  },
+  confirmOrder: {
+    defaultMessage: "Confirm Order",
   },
   confirmingYourPayment: {
     defaultMessage: "Confirming your payment...",

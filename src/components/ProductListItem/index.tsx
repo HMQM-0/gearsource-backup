@@ -26,7 +26,7 @@ export interface Product extends BasicProductFields {
     id: string;
     companyName: string;
   };
-  defaultVariant?: ProductVariant
+  defaultVariant?: ProductVariant;
   category?: {
     id: string;
     name: string;
@@ -121,7 +121,6 @@ const ProductListItem: React.FC<ProductListItemProps> = ({
         { type: "error" }
       );
     }
-    
   };
 
   // TODO: FIX PRICING DISPLAY BUGS
@@ -171,7 +170,7 @@ const ProductListItem: React.FC<ProductListItemProps> = ({
           >
             <TaxedMoney taxedMoney={price} />
           </Box>
-          {product.isAvailableForPurchase && 
+          {product.isAvailableForPurchase && (
             <Box>
               <Box style={{ position: "absolute", right: 0, bottom: -8 }}>
                 <IconButton
@@ -184,7 +183,8 @@ const ProductListItem: React.FC<ProductListItemProps> = ({
                   <AddCircleIcon />
                 </IconButton>
               </Box>
-            </Box>}
+            </Box>
+          )}
         </>
       );
     } else {
@@ -201,7 +201,7 @@ const ProductListItem: React.FC<ProductListItemProps> = ({
               <TaxedMoney taxedMoney={priceUndiscounted} />
             </Box>
           </Box>
-          {product.isAvailableForPurchase &&
+          {product.isAvailableForPurchase && (
             <Box>
               <Box style={{ position: "absolute", right: 0, bottom: -8 }}>
                 <IconButton
@@ -214,7 +214,8 @@ const ProductListItem: React.FC<ProductListItemProps> = ({
                   <AddCircleIcon />
                 </IconButton>
               </Box>
-            </Box>}
+            </Box>
+          )}
         </>
       );
     }

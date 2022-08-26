@@ -69,7 +69,7 @@ const PromoBanner: React.FC<IPromoBannerProps> = (props) => {
             className="promo_banner"
             position="static"
             style={{
-              backgroundColor: loading ? "#000055" : promo.barColor,
+              backgroundColor: loading ? "#2483BF" : "#000",
               color: loading ? "#fff" : promo.textColor,
               borderColor: loading ? "#ccc" : promo.borderColor,
             }}

@@ -32,4 +32,8 @@ export interface IProps {
    * Method called when gateway error occured.
    */
   onError: (errors: IFormError[]) => void;
+  /**
+   * Method called to update state with whether payment was already submitted to Stripe for a checkout.
+   */
+  setPaymentAlreadySubmitted?: (bool: boolean) => void;
 }

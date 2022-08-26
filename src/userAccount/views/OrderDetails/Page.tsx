@@ -46,12 +46,7 @@ const Page: React.FC<{
   return order ? (
     <>
       {!guest && (
-        <Link
-          className="order-details__link"
-          to={
-            orderHistoryUrl
-          }
-        >
+        <Link className="order-details__link" to={orderHistoryUrl}>
           <FormattedMessage defaultMessage="Go back to Order History" />
         </Link>
       )}

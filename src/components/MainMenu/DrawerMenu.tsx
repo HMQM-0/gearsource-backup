@@ -17,7 +17,7 @@ const DrawerMenu: React.FunctionComponent<IDrawerMenuProps> = (props) => {
       anchor={anchor}
       open={open}
       ModalProps={{ onBackdropClick: close }}
-      style={{ maxWidth: 400 }}
+      style={{ maxWidth: "100%" }}
     >
       <Box className="side-nav" onClick={(evt) => evt.stopPropagation()}>
         <MobileNavList logo={logo} items={items} hideOverlay={close} />

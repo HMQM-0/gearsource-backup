@@ -23,7 +23,10 @@ export const homePageQuery = gql`
         description
         descriptionJson
         name
-        products(first: 20, filter: { isPublished: true, stockAvailability: IN_STOCK }) {
+        products(
+          first: 20
+          filter: { isPublished: true, stockAvailability: IN_STOCK }
+        ) {
           edges {
             node {
               ...BasicProductFields
@@ -131,7 +134,7 @@ export const builderHomePageQuery = gql`
                 id
                 name
                 quantityAvailable
-              }
+              }F
             }
           }
         }

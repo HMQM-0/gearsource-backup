@@ -200,6 +200,15 @@ export const categoryProductsQuery = gql`
             id
             slug
             name
+            
+          }
+          attributes{
+            id
+            slug
+            name
+            values{
+              name
+            }
           }
           seller {
             id
